@@ -357,7 +357,7 @@ MonoBehaviour:
   contentRoot: {fileID: 1658648664341257180}
   resizeHandle: {fileID: 7027205411709002624}
   minScale: 0.1
-  maxScale: 2
+  maxScale: 1
 --- !u!1 &8685662593897021969
 GameObject:
   m_ObjectHideFlags: 0

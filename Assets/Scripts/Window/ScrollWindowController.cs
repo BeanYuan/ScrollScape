@@ -4,7 +4,8 @@ using UnityEngine;
 
 /// <summary>
 /// 控制滚动窗口：根据 Handle 的位置移动 ContentRoot。
-/// 支持上下、左右两个方向；你可以只开纵向。
+/// contentMinLocalPos / contentMaxLocalPos = 相对初始位置的“位移范围”，
+/// 不会在点击 Handle 时重置 ContentRoot 的初始位置。
 /// </summary>
 public class ScrollWindowController : MonoBehaviour
 {
@@ -13,16 +14,19 @@ public class ScrollWindowController : MonoBehaviour
     public Transform scrollBarRoot;     // ScrollBarRoot
     public Transform handle;            // Handle（被拖动的按钮）
 
-    [Header("内容在滚动时的位移范围（本地坐标）")]
-    public Vector2 contentMinLocalPos;  // Handle 在滚动条“最小位置”时，ContentRoot 的 localPosition
-    public Vector2 contentMaxLocalPos;  // Handle 在滚动条“最大位置”时，ContentRoot 的 localPosition
+    [Header("内容在滚动时的位移范围（相对初始位置的偏移量）")]
+    public Vector2 contentMinLocalPos;  // Handle 在最小位置时，相对初始位置的偏移
+    public Vector2 contentMaxLocalPos;  // Handle 在最大位置时，相对初始位置的偏移
 
     [Header("是否启用方向")]
-    public bool enableHorizontal = false;   // 现在可以先关掉
-    public bool enableVertical = true;      // 纵向滚动
+    public bool enableHorizontal = false;
+    public bool enableVertical = true;
 
     // 供 HandleDrag 读取的可拖动范围（世界坐标）
     private Bounds scrollBounds;
+
+    // 记录 ContentRoot 的“基准位置”
+    private Vector3 baseContentLocalPos;
 
     void Awake()
     {
@@ -44,7 +48,7 @@ public class ScrollWindowController : MonoBehaviour
             if (t != null) handle = t;
         }
 
-        // 用 ScrollBarRoot 上的 Renderer 或 Collider 来确定范围
+        // 用 ScrollBarRoot 上的 Renderer 或 Collider 来确定 Handle 可拖范围
         if (scrollBarRoot != null)
         {
             var sr = scrollBarRoot.GetComponentInChildren<Renderer>();
@@ -58,23 +62,46 @@ public class ScrollWindowController : MonoBehaviour
                 scrollBounds = new Bounds(scrollBarRoot.position, scrollBarRoot.localScale);
         }
 
-        // 初始时 handle 放在 root 中心
-        if (handle != null)
+        if (contentRoot == null || handle == null) return;
+
+        // 1）先拿到此刻你在 Scene 里摆好的 ContentRoot 位置
+        Vector3 currentContentPos = contentRoot.localPosition;
+
+        // 2）根据 Handle 当前在滚动条中的位置，算出 tInit（0~1）
+        float tInitX = 0.5f;
+        float tInitY = 0.5f;
+
+        if (enableHorizontal)
         {
-            Vector3 pos = handle.position;
-            pos.x = scrollBounds.center.x;
-            pos.y = scrollBounds.center.y;
-            handle.position = pos;
+            tInitX = Mathf.InverseLerp(scrollBounds.min.x, scrollBounds.max.x, handle.position.x);
         }
 
-        // 初始时内容放在两端的中间（你可以在 Inspector 手动改）
-        if (contentRoot != null)
+        if (enableVertical)
         {
-            Vector3 lp = contentRoot.localPosition;
-            lp.x = Mathf.Lerp(contentMinLocalPos.x, contentMaxLocalPos.x, 0.5f);
-            lp.y = Mathf.Lerp(contentMinLocalPos.y, contentMaxLocalPos.y, 0.5f);
-            contentRoot.localPosition = lp;
+            tInitY = Mathf.InverseLerp(scrollBounds.min.y, scrollBounds.max.y, handle.position.y);
         }
+
+        // 3）在 tInit 下，理论上的偏移量（由你在 Inspector 设置的范围决定）
+        Vector3 initOffset = Vector3.zero;
+
+        if (enableHorizontal)
+        {
+            float offX = Mathf.Lerp(contentMinLocalPos.x, contentMaxLocalPos.x, tInitX);
+            initOffset.x = offX;
+        }
+
+        if (enableVertical)
+        {
+            float offY = Mathf.Lerp(contentMinLocalPos.y, contentMaxLocalPos.y, tInitY);
+            initOffset.y = offY;
+        }
+
+        // 4）反推“基准位置”，保证：
+        //    在 t = tInit 时，baseContentLocalPos + offset(tInit) = 你现在看到的 ContentRoot 位置
+        baseContentLocalPos = currentContentPos - initOffset;
+
+        // ? 不再在这里修改 contentRoot.localPosition，
+        //    也不强行把 handle 归中，一切以 Scene 中的初始摆放为准。
     }
 
     /// <summary>
@@ -88,16 +115,19 @@ public class ScrollWindowController : MonoBehaviour
         tX = Mathf.Clamp01(tX);
         tY = Mathf.Clamp01(tY);
 
-        Vector3 lp = contentRoot.localPosition;
+        // 从“基准位置”开始，加上偏移
+        Vector3 lp = baseContentLocalPos;
 
         if (enableHorizontal)
         {
-            lp.x = Mathf.Lerp(contentMinLocalPos.x, contentMaxLocalPos.x, tX);
+            float offsetX = Mathf.Lerp(contentMinLocalPos.x, contentMaxLocalPos.x, tX);
+            lp.x += offsetX;
         }
 
         if (enableVertical)
         {
-            lp.y = Mathf.Lerp(contentMinLocalPos.y, contentMaxLocalPos.y, tY);
+            float offsetY = Mathf.Lerp(contentMinLocalPos.y, contentMaxLocalPos.y, tY);
+            lp.y += offsetY;
         }
 
         contentRoot.localPosition = lp;
@@ -111,4 +141,3 @@ public class ScrollWindowController : MonoBehaviour
         return scrollBounds;
     }
 }
-

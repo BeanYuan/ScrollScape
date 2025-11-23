@@ -8,6 +8,12 @@ public class HandleDrag : MonoBehaviour
     public ScrollWindowController window;
     public LayerMask handleLayerMask;
 
+    [Header("滚动音效")]
+    public AudioSource audioSource;       // 专门给滚动用的 AudioSource（挂在 handle 上或父物体上）
+    public AudioClip dragStartClip;       // 开始拖动时播放一次
+    public AudioClip dragLoopClip;        // 拖动过程中循环播放
+    public AudioClip dragEndClip;         // 松开时播放一次
+
     private Camera cam;
     private bool dragging;
     private Vector3 dragOffset;
@@ -32,6 +38,9 @@ public class HandleDrag : MonoBehaviour
             handleHalfSize = sr.bounds.extents;
         else
             handleHalfSize = Vector2.zero;
+
+        // 不自动添加 AudioSource，按你习惯在 Inspector 手动挂
+        // if (audioSource == null) audioSource = GetComponent<AudioSource>();
     }
 
     void OnMouseDown()
@@ -47,6 +56,21 @@ public class HandleDrag : MonoBehaviour
             dragging = true;
             dragOffset = transform.position - (Vector3)mouseWorld;
             scrollBounds = window.GetScrollBounds();
+
+            // 👉 开始拖动音效
+            if (audioSource != null)
+            {
+                if (dragStartClip != null)
+                    audioSource.PlayOneShot(dragStartClip);
+
+                // 循环滚动音效
+                if (dragLoopClip != null)
+                {
+                    audioSource.clip = dragLoopClip;
+                    audioSource.loop = true;
+                    audioSource.Play();
+                }
+            }
         }
         else
         {
@@ -96,6 +120,20 @@ public class HandleDrag : MonoBehaviour
 
     void OnMouseUp()
     {
+        if (!dragging)
+            return;
+
         dragging = false;
+
+        if (audioSource != null)
+        {
+            // 停止循环滚动音效
+            if (audioSource.loop && audioSource.clip == dragLoopClip)
+                audioSource.Stop();
+
+            // 播放结束音效
+            if (dragEndClip != null)
+                audioSource.PlayOneShot(dragEndClip);
+        }
     }
 }

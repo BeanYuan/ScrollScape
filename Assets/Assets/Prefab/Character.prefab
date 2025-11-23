@@ -119,6 +119,7 @@ GameObject:
   - component: {fileID: 5495341032090609914}
   - component: {fileID: 3533414314762424246}
   - component: {fileID: 7302658791814205779}
+  - component: {fileID: -5704207315954705571}
   m_Layer: 0
   m_Name: Character
   m_TagString: Untagged
@@ -338,6 +339,21 @@ AudioSource:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
+--- !u!114 &-5704207315954705571
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6187354349655086928}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 117d1708b56cb5142b241e7a250aab11, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  deathSfx: {fileID: 8300000, guid: 86472af4b4aa71546bad9c51b786b8ab, type: 3}
+  audioSource: {fileID: 7302658791814205779}
+  currentCheckpoint: {x: 0, y: 0, z: 0}
 --- !u!1 &6273658314502934085
 GameObject:
   m_ObjectHideFlags: 0
