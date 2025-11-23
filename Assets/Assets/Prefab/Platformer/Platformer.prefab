@@ -14,7 +14,7 @@ GameObject:
   - component: {fileID: 999159186272506420}
   m_Layer: 6
   m_Name: Platformer
-  m_TagString: Untagged
+  m_TagString: MovingPlatform
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -75,7 +75,7 @@ SpriteRenderer:
   m_SortingLayerID: 275841363
   m_SortingLayer: 2
   m_SortingOrder: 6
-  m_Sprite: {fileID: -653201519, guid: 6c1d4239ec9c2894faa073918b735a3d, type: 3}
+  m_Sprite: {fileID: 4813655, guid: 6c1d4239ec9c2894faa073918b735a3d, type: 3}
   m_Color: {r: 0.23113209, g: 0.79566807, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0

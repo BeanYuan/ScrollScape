@@ -74,7 +74,7 @@ SpriteRenderer:
   m_SortingLayerID: 275841363
   m_SortingLayer: 2
   m_SortingOrder: 6
-  m_Sprite: {fileID: 435465384, guid: 6c1d4239ec9c2894faa073918b735a3d, type: 3}
+  m_Sprite: {fileID: -653201519, guid: 6c1d4239ec9c2894faa073918b735a3d, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -97,7 +97,7 @@ GameObject:
   - component: {fileID: 8747326178584614940}
   - component: {fileID: 442255374112752427}
   - component: {fileID: 3868912015414972008}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: Handle
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -160,7 +160,7 @@ SpriteRenderer:
   m_SortingLayerID: 275841363
   m_SortingLayer: 2
   m_SortingOrder: 7
-  m_Sprite: {fileID: 2109901319, guid: 6c1d4239ec9c2894faa073918b735a3d, type: 3}
+  m_Sprite: {fileID: 1778247196, guid: 6c1d4239ec9c2894faa073918b735a3d, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -187,7 +187,7 @@ BoxCollider2D:
   m_ExcludeLayers:
     serializedVersion: 2
     m_Bits: 0
-  m_LayerOverridePriority: 0
+  m_LayerOverridePriority: 1
   m_ForceSendLayers:
     serializedVersion: 2
     m_Bits: 4294967295
@@ -207,14 +207,14 @@ BoxCollider2D:
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0.5, y: 0.5}
-    oldSize: {x: 0.625, y: 3.03125}
+    oldSize: {x: 1, y: 3.03125}
     newSize: {x: 1, y: 1}
     adaptiveTilingThreshold: 0.5
     drawMode: 0
     adaptiveTiling: 0
   m_AutoTiling: 0
   serializedVersion: 2
-  m_Size: {x: 1.38, y: 3.03125}
+  m_Size: {x: 1.6, y: 3.03125}
   m_EdgeRadius: 0
 --- !u!114 &3868912015414972008
 MonoBehaviour:
@@ -229,6 +229,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   window: {fileID: 289964998649909299}
+  handleLayerMask:
+    serializedVersion: 2
+    m_Bits: 256
 --- !u!1 &2198801356282018200
 GameObject:
   m_ObjectHideFlags: 0
@@ -324,7 +327,7 @@ GameObject:
   - component: {fileID: 3262863159079790402}
   - component: {fileID: 7918225684070959114}
   - component: {fileID: 8354169656470246082}
-  m_Layer: 0
+  m_Layer: 2
   m_Name: ViewArea
   m_TagString: Untagged
   m_Icon: {fileID: 0}

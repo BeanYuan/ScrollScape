@@ -41,6 +41,9 @@ public class CharacterMovement : MonoBehaviour
     private float jumpBufferCounter;
 
     private Animator anim;
+
+    private Transform currentPlatform;
+
     void Awake()
     {
         rb = GetComponent<Rigidbody2D>();
@@ -141,6 +144,7 @@ public class CharacterMovement : MonoBehaviour
         if (col == null)
         {
             isGrounded = false;
+            DetachFromPlatform();  // 没碰撞体就保险起见解掉父子
             return;
         }
 
@@ -157,14 +161,64 @@ public class CharacterMovement : MonoBehaviour
         );
 
         bool wasGrounded = isGrounded;
-        isGrounded = Physics2D.OverlapBox(boxCenter, boxSize, 0f, groundLayer);
 
+        // ★ 关键：拿到脚下命中的 collider
+        Collider2D hit = Physics2D.OverlapBox(boxCenter, boxSize, 0f, groundLayer);
+        isGrounded = (hit != null);
+
+        // ---- 处理移动平台父子关系 ----
+        UpdatePlatformParent(hit);
+
+        // 刚刚落地瞬间：刷新土狼时间，让连跳绝对不卡
         if (isGrounded && !wasGrounded && rb.velocity.y <= 0f)
         {
             coyoteCounter = coyoteTime;
             isJumping = false;
         }
     }
+
+    // 根据脚下的 collider 决定是否挂到移动平台上
+    void UpdatePlatformParent(Collider2D groundHit)
+    {
+        Transform newPlatform = null;
+
+        // 只有在“真的落地”的时候才考虑平台，否则在空中不挂任何平台
+        if (isGrounded && groundHit != null && groundHit.CompareTag("MovingPlatform"))
+        {
+            newPlatform = groundHit.transform;
+        }
+
+        if (newPlatform == currentPlatform)
+        {
+            // 脚下平台没变，不用处理
+            return;
+        }
+
+        // 从旧平台下来：取消父子关系
+        if (currentPlatform != null && (newPlatform == null || newPlatform != currentPlatform))
+        {
+            DetachFromPlatform();
+        }
+
+        // 上了新平台：挂上去
+        if (newPlatform != null)
+        {
+            currentPlatform = newPlatform;
+            // 保持当前世界坐标不变，只改变 parent
+            transform.SetParent(currentPlatform, true);
+        }
+    }
+
+    // 强制解除平台父子关系
+    void DetachFromPlatform()
+    {
+        if (currentPlatform != null)
+        {
+            transform.SetParent(null, true);
+            currentPlatform = null;
+        }
+    }
+
 
     void HandleFlip()
     {

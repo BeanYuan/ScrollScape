@@ -163,7 +163,7 @@ MonoBehaviour:
     m_Bits: 64
   groundBoxHeight: 0.2
   groundBoxOffset: 0.1
-  groundBoxWidthScale: 1
+  groundBoxWidthScale: 0.8
   coyoteTime: 0.12
   jumpBufferTime: 0.12
   maxFallSpeed: -25
