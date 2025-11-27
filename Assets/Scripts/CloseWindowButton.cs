@@ -47,20 +47,9 @@ public class CloseWindowButton : MonoBehaviour
     {
         if (root == null) return;
 
-        // ?? 1. 禁用所有 Renderer
-        foreach (var r in root.GetComponentsInChildren<Renderer>(true))
-            r.enabled = false;
-
-        // ?? 2. 禁用所有 Collider2D（按钮本身除外）
-        foreach (var col in root.GetComponentsInChildren<Collider2D>(true))
-        {
-            // 不要禁用关闭按钮的 Collider，否则无法再次开启时无法点击
-            if (col.gameObject == this.gameObject)
-                continue;
-
-            col.enabled = false;
-        }
-
-        // GameObject 不 SetActive(false)，所以 windowAudio 还能继续播放
+        root.SetActive(false);
     }
+
+
+    // GameObject 不 SetActive(false)，所以 windowAudio 还能继续播放
 }
