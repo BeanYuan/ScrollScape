@@ -245,7 +245,7 @@ MonoBehaviour:
   componentsToEnable: []
   clickSfx: {fileID: 8300000, guid: 2b14baae7b879b74084b9bccf7d0bf4f, type: 3}
   audioSource: {fileID: 4913338927323455508}
-  flyDuration: 0.4
+  flyDuration: 1
   endScaleFactor: 0.2
   moveCurve:
     serializedVersion: 2
