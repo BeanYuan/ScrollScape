@@ -14,6 +14,9 @@ public class HandleDrag : MonoBehaviour
     public AudioClip dragLoopClip;        // 拖动过程中循环播放
     public AudioClip dragEndClip;         // 松开时播放一次
 
+    [Header("悬浮高亮")]
+    public Color hoverColor = new Color(1f, 1f, 1f, 1f);  // 默认：全白（如果本来是偏灰，就会略微变亮）
+
     private Camera cam;
     private bool dragging;
     private Vector3 dragOffset;
@@ -22,6 +25,11 @@ public class HandleDrag : MonoBehaviour
     private Collider2D myCollider;
 
     private Bounds scrollBounds;
+
+    // 高亮相关
+    private SpriteRenderer sr;
+    private Color originalColor;
+    private bool hasOriginalColor = false;
 
     void Start()
     {
@@ -32,12 +40,18 @@ public class HandleDrag : MonoBehaviour
 
         myCollider = GetComponent<Collider2D>();
 
-        // 获取 handle sprite 半尺寸
-        var sr = GetComponent<SpriteRenderer>();
+        // 获取 handle sprite 半尺寸 + SpriteRenderer
+        sr = GetComponent<SpriteRenderer>();
         if (sr != null)
+        {
             handleHalfSize = sr.bounds.extents;
+            originalColor = sr.color;
+            hasOriginalColor = true;
+        }
         else
+        {
             handleHalfSize = Vector2.zero;
+        }
 
         // 不自动添加 AudioSource，按你习惯在 Inspector 手动挂
         // if (audioSource == null) audioSource = GetComponent<AudioSource>();
@@ -134,6 +148,25 @@ public class HandleDrag : MonoBehaviour
             // 播放结束音效
             if (dragEndClip != null)
                 audioSource.PlayOneShot(dragEndClip);
+        }
+    }
+
+    // ---------- 悬浮高亮逻辑 ----------
+    void OnMouseEnter()
+    {
+        // 鼠标第一次碰到这个 collider 时触发
+        if (sr != null && hasOriginalColor)
+        {
+            sr.color = hoverColor;
+        }
+    }
+
+    void OnMouseExit()
+    {
+        // 鼠标离开 collider 时恢复原色
+        if (sr != null && hasOriginalColor)
+        {
+            sr.color = originalColor;
         }
     }
 }

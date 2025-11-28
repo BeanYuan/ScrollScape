@@ -7,7 +7,8 @@ using UnityEngine;
 /// - 玩家用鼠标单击时，启用指定的 GameObject / 组件；
 /// - 播放一段点击音效；
 /// - 播放完成动画：图标飞向目标并变小后消失；
-/// - 动画结束后：本体 SpriteRenderer 隐藏，Collider 停用（不 SetActive(false)）。
+/// - 动画结束后：本体 SpriteRenderer 隐藏，Collider 停用（不 SetActive(false)）；
+/// - 鼠标悬浮时高亮提示。
 /// </summary>
 [RequireComponent(typeof(Collider2D))]
 public class OneShotActivator : MonoBehaviour
@@ -32,6 +33,11 @@ public class OneShotActivator : MonoBehaviour
     public bool disableColliderAfterClick = true;  // 动画结束后关碰撞
     public bool disableScriptAfterClick = true;    // 动画结束后关脚本（可选）
 
+    [Header("悬浮高亮")]
+    public Color hoverColor = new Color(1f, 0.9f, 0.7f, 1f);  // 鼠标悬浮时颜色
+    private Color originalColor;
+    private bool hasOriginalColor = false;
+
     private bool hasActivated = false;
     private Collider2D col;
     private SpriteRenderer sr;
@@ -40,6 +46,12 @@ public class OneShotActivator : MonoBehaviour
     {
         col = GetComponent<Collider2D>();
         sr = GetComponent<SpriteRenderer>();
+
+        if (sr != null)
+        {
+            originalColor = sr.color;
+            hasOriginalColor = true;
+        }
 
         // 不强制自动添加 AudioSource，但如果本体上有就用它
         if (audioSource == null)
@@ -139,7 +151,7 @@ public class OneShotActivator : MonoBehaviour
                     Vector3 start = originalPos;
                     Vector3 end = ghostTargets[i].position;
 
-                    // 位置插值（可用曲线调整加速/减速感）
+                    // 位置插值
                     Vector3 pos = Vector3.Lerp(start, end, moveT);
                     ghosts[i].transform.position = pos;
 
@@ -163,12 +175,30 @@ public class OneShotActivator : MonoBehaviour
         transform.position = originalPos;
         transform.localScale = originalScale;
 
-        // 视觉保持隐藏、Collider 已经关掉（上面已经处理过）
+        // 保持 sr.disabled & collider.disabled 的状态
 
         // 9) 最终可选：关闭脚本（彻底 one-shot）
         if (disableScriptAfterClick)
         {
             enabled = false;
+        }
+    }
+
+    // ========= 悬浮高亮 =========
+    void OnMouseEnter()
+    {
+        if (hasActivated) return;           // 已经点过就不再高亮
+        if (sr != null && hasOriginalColor)
+        {
+            sr.color = hoverColor;
+        }
+    }
+
+    void OnMouseExit()
+    {
+        if (sr != null && hasOriginalColor)
+        {
+            sr.color = originalColor;
         }
     }
 }

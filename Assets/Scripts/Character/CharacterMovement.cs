@@ -91,9 +91,15 @@ public class CharacterMovement : MonoBehaviour
             rb.velocity = new Vector2(rb.velocity.x, jumpForce);
             jumpBufferCounter = 0f;
 
+            // 播放音效
             if (audioSource != null && jumpSfx != null)
-            {
                 audioSource.PlayOneShot(jumpSfx);
+
+            // 播起跳动画
+            if (anim != null)
+            {
+                anim.ResetTrigger("JumpLand");
+                anim.SetTrigger("JumpStart");
             }
         }
 
@@ -123,12 +129,19 @@ public class CharacterMovement : MonoBehaviour
         if (rb.velocity.y < maxFallSpeed)
             rb.velocity = new Vector2(rb.velocity.x, maxFallSpeed);
 
-        // ---- ★ 新增：驱动动画（Idle/Walk）----
+        // ---- 驱动动画（Idle/Walk/Jump）----
         if (anim != null)
         {
-            // speed = 横向移动速度的绝对值
+            // 横向速度控制 Idle / Walk
             anim.SetFloat("Speed", Mathf.Abs(rb.velocity.x));
+
+            // 是否在地面上，控制 Jump 进出
+            anim.SetBool("IsGrounded", isGrounded);
+
+            // 如果以后想区分上升 / 下落，可以顺便传一个 VerticalSpeed：
+            // anim.SetFloat("VerticalSpeed", rb.velocity.y);
         }
+
 
         HandleFlip();
     }
@@ -174,6 +187,9 @@ public class CharacterMovement : MonoBehaviour
         {
             coyoteCounter = coyoteTime;
             isJumping = false;
+
+            if (anim != null)
+                anim.SetTrigger("JumpLand");
         }
     }
 

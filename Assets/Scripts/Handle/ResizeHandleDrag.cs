@@ -12,12 +12,18 @@ public class ResizeHandleDrag : MonoBehaviour
 
     private Vector2 dragStartMouseWorld;
     private Vector2 dragStartWindowSize;  // 拖动开始时的窗口世界宽高
-    private float dragStartScaleFactor;  // 拖动开始时的缩放倍数
+    private float dragStartScaleFactor;   // 拖动开始时的缩放倍数
 
     private Collider2D myCollider;
 
     [Header("拖动灵敏度（一般 1 就行）")]
     public float sensitivity = 1.0f;
+
+    [Header("悬浮高亮")]
+    public Color hoverColor = new Color(1f, 1f, 1f, 1f);  // 鼠标悬浮时的颜色
+    private SpriteRenderer sr;
+    private Color originalColor;
+    private bool hasOriginalColor = false;
 
     void Start()
     {
@@ -27,6 +33,14 @@ public class ResizeHandleDrag : MonoBehaviour
             window = GetComponentInParent<ResizableWindow>();
 
         myCollider = GetComponent<Collider2D>();
+
+        // 获取 SpriteRenderer & 原始颜色
+        sr = GetComponent<SpriteRenderer>();
+        if (sr != null)
+        {
+            originalColor = sr.color;
+            hasOriginalColor = true;
+        }
     }
 
     void OnMouseDown()
@@ -60,22 +74,21 @@ public class ResizeHandleDrag : MonoBehaviour
 
         // 以右下角为把手：
         // 往右拖 → 宽度增加（delta.x）
-        // 往下拖 → 高度增加（-delta.y 或 +delta.y，取决于你的坐标习惯）
+        // 往下拖 → 高度增加（-delta.y）
         float newWidth = dragStartWindowSize.x + delta.x * sensitivity;
         float newHeight = dragStartWindowSize.y - delta.y * sensitivity; // 往下拖变大
 
-        // 不让宽高变成负数或 0，防御一下
+        // 防止宽高为 0 或负数
         newWidth = Mathf.Max(0.01f, newWidth);
         newHeight = Mathf.Max(0.01f, newHeight);
 
-        // 相对变化比例（基于拖动开始时的宽高）
+        // 相对变化比例
         float factorW = newWidth / dragStartWindowSize.x;
         float factorH = newHeight / dragStartWindowSize.y;
 
-        // 为了保持比例统一，我们取两个方向里“放大的那一侧”
+        // 保持等比缩放：取较大的那个
         float factor = Mathf.Max(factorW, factorH);
 
-        // 最终缩放倍数 = 初始缩放倍数 × 相对变化倍数
         float targetScaleFactor = dragStartScaleFactor * factor;
 
         window.ResizeWithScaleFactor(targetScaleFactor);
@@ -84,5 +97,22 @@ public class ResizeHandleDrag : MonoBehaviour
     void OnMouseUp()
     {
         dragging = false;
+    }
+
+    // ---------- 悬浮高亮 ----------
+    void OnMouseEnter()
+    {
+        if (sr != null && hasOriginalColor)
+        {
+            sr.color = hoverColor;
+        }
+    }
+
+    void OnMouseExit()
+    {
+        if (sr != null && hasOriginalColor)
+        {
+            sr.color = originalColor;
+        }
     }
 }
