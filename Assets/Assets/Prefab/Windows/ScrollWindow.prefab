@@ -234,7 +234,7 @@ MonoBehaviour:
     m_Bits: 256
   audioSource: {fileID: 6605462102179462172}
   dragStartClip: {fileID: 8300000, guid: d2908df01ebcfcb41ba347a4d4e557f1, type: 3}
-  dragLoopClip: {fileID: 8300000, guid: 2dbde647ae013a94294798a764981d10, type: 3}
+  dragLoopClip: {fileID: 0}
   dragEndClip: {fileID: 8300000, guid: 6e940e3a8f2b77343ae89a1e0bb47144, type: 3}
   hoverColor: {r: 1, g: 1, b: 1, a: 1}
 --- !u!1 &2198801356282018200
