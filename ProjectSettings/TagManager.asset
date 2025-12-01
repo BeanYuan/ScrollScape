@@ -54,3 +54,9 @@ TagManager:
   - name: Player
     uniqueID: 3916903919
     locked: 0
+  - name: ResizeWindow
+    uniqueID: 3570350799
+    locked: 0
+  - name: ScrollWindow
+    uniqueID: 3800286007
+    locked: 0
