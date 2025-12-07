@@ -7,6 +7,8 @@ using UnityEngine;
 /// - 玩家走出当前屏幕时，更新目标屏幕中心；
 /// - 摄像机与背景都平滑移动到目标位置；
 /// - 背景每次移动为背景宽/高的 1/4，实现简单视差。
+/// 这里假定“逻辑画幅”固定为 16:9，
+/// 不再依赖 cam.aspect（因为已经通过 FixedAspectRatio 做了黑边 16:9 输出）
 /// </summary>
 [RequireComponent(typeof(Camera))]
 public class StepCameraFollow2D : MonoBehaviour
@@ -21,6 +23,9 @@ public class StepCameraFollow2D : MonoBehaviour
 
     [Header("平滑参数")]
     public float smoothTime = 0.35f;  // 越大越慢、越柔和
+
+    [Header("逻辑画幅（保持与 FixedAspectRatio 一致）")]
+    public float designAspect = 16f / 9f;   // 逻辑上使用的画幅（固定 16:9）
 
     private Camera cam;
     private float halfWidth;
@@ -45,10 +50,12 @@ public class StepCameraFollow2D : MonoBehaviour
     {
         cam = GetComponent<Camera>();
 
+        // 垂直方向由 orthographicSize 决定，高度 = size * 2
         halfHeight = cam.orthographicSize;
-        halfWidth = halfHeight * cam.aspect;
+        // 水平宽度 = 高度 * 固定 16:9 画幅（不要再用 cam.aspect）
+        halfWidth = halfHeight * designAspect;
 
-        // 初始屏幕中心 = 当前相机位置
+        // 初始屏幕中心 = 当前相机位置（也可以用玩家所在的格子中心来对齐）
         regionCenter = transform.position;
         camTargetPos = transform.position;
 
@@ -66,15 +73,16 @@ public class StepCameraFollow2D : MonoBehaviour
         }
     }
 
-    void Update()
+    // 用 LateUpdate，确保角色先移动，摄像机后跟随
+    void LateUpdate()
     {
         if (player == null) return;
 
-        // 每帧根据相机当前参数算可视范围
+        // 如果你在运行时不会改 orthographicSize，这两行可以省略
         halfHeight = cam.orthographicSize;
-        halfWidth = halfHeight * cam.aspect;
+        halfWidth = halfHeight * designAspect;
 
-        // ---------- 1. 先判断玩家是否跑出了当前“屏幕格子” ----------
+        // ---------- 1. 判断玩家是否跑出了当前“屏幕格子” ----------
         bool regionChanged = false;
         Vector3 newRegionCenter = regionCenter;
         Vector3 newBgTargetPos = bgTargetPos;
@@ -125,14 +133,16 @@ public class StepCameraFollow2D : MonoBehaviour
 
             // 新的背景目标位置
             if (background != null)
+            {
                 bgTargetPos = new Vector3(
                     newBgTargetPos.x,
                     newBgTargetPos.y,
                     background.position.z
                 );
+            }
         }
 
-        // ---------- 2. 再把相机/背景平滑地移动到目标点 ----------
+        // ---------- 2. 相机/背景平滑移动到目标点 ----------
         transform.position = Vector3.SmoothDamp(
             transform.position,
             camTargetPos,
@@ -151,5 +161,3 @@ public class StepCameraFollow2D : MonoBehaviour
         }
     }
 }
-
-

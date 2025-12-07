@@ -183,7 +183,6 @@ public class FakeTerminal : MonoBehaviour
                 break;
             default:
                 PrintSystem("Unknown command: " + trimmed);
-                PrintSystem("Type HELP for available commands.");
                 break;
         }
     }
@@ -191,9 +190,9 @@ public class FakeTerminal : MonoBehaviour
     void ExecuteHelp()
     {
         PrintSystem("Available commands:");
-        PrintSystem("DIR       Displays the files and folders in the current directory.");
+        PrintSystem("DIR       Displays the current directory.");
         PrintSystem("CLS       Clears the screen.");
-        PrintSystem("FORMAT    Formats a drive or virtual world directory (use with caution).");
+        PrintSystem("FORMAT    Formats virtual world directory (use with caution).");
         PrintSystem("EXIT      Exits the console.");
     }
 
@@ -278,21 +277,37 @@ public class FakeTerminal : MonoBehaviour
     {
         if (textArea == null) return;
 
-        StringBuilder sb = new StringBuilder();
+        // 1. 先构建完整文本（不裁剪）
+        StringBuilder fullSb = new StringBuilder();
 
-        int start = Mathf.Max(0, lines.Count - maxVisibleLines);
-        for (int i = start; i < lines.Count; i++)
-        {
-            sb.AppendLine(lines[i]);
-        }
+        foreach (string l in lines)
+            fullSb.AppendLine(l);
 
-        sb.Append(prompt);
-        sb.Append(currentLine);
+        string lastLine = prompt + currentLine + (hasFocus && cursorVisible ? cursorChar : "");
+        fullSb.Append(lastLine);
 
-        if (hasFocus && cursorVisible)
-            sb.Append(cursorChar);
+        // 2. 先把完整文本写进去，让 TMP 算视觉行数
+        textArea.text = fullSb.ToString();
+        textArea.ForceMeshUpdate();
 
-        textArea.text = sb.ToString();
+        int visualLines = textArea.textInfo.lineCount;
+
+        // 3. 如果视觉行数没超出限制，直接显示
+        if (visualLines <= maxVisibleLines)
+            return;
+
+        // 4. 计算“需要截掉多少视觉行”
+        int linesToCut = visualLines - maxVisibleLines;
+
+        // 5. 重新输出，只保留视觉行底部 maxVisibleLines 内容
+        //    注意：不是按逻辑行，而是按字符裁剪（最准确）
+        TMP_TextInfo info = textArea.textInfo;
+
+        int startChar = info.lineInfo[linesToCut].firstCharacterIndex;
+
+        string finalText = fullSb.ToString().Substring(startChar);
+
+        textArea.text = finalText;
     }
 
     void HandleCursorBlink()

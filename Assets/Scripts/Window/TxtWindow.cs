@@ -12,7 +12,7 @@ public class TxtWindow : MonoBehaviour
     public TMP_Text textArea;
 
     [Header("显示设置")]
-    public int maxVisibleLines = 30;      // 屏幕上最多显示多少行
+    public int maxVisibleLines = 11;      // 屏幕上最多显示多少行
     public int maxHistoryLines = 500;     // 内部最多保留多少行历史
     public string cursorChar = "_";       // 光标字符
 
@@ -152,24 +152,36 @@ public class TxtWindow : MonoBehaviour
     {
         if (textArea == null) return;
 
-        StringBuilder sb = new StringBuilder();
+        // Step 1: 先构造完整文本给 TMP 处理，让它自己软换行
+        StringBuilder full = new StringBuilder();
 
-        // 只显示最后 maxVisibleLines 行
-        int start = Mathf.Max(0, lines.Count - maxVisibleLines);
-        for (int i = start; i < lines.Count; i++)
-        {
-            sb.AppendLine(lines[i]);
-        }
+        foreach (var l in lines)
+            full.AppendLine(l);
 
-        // 当前编辑行
-        sb.Append(currentLine);
+        string current = hasFocus && cursorVisible ? currentLine + cursorChar : currentLine;
+        full.Append(current);
 
-        // 光标
-        if (hasFocus && cursorVisible)
-            sb.Append(cursorChar);
+        textArea.text = full.ToString();
+        textArea.ForceMeshUpdate();
 
-        textArea.text = sb.ToString();
+        // Step 2: 获取可见“视觉行”数量
+        TMP_TextInfo info = textArea.textInfo;
+        int visualLines = info.lineCount;
+
+        // Step 3: 如果视觉行数不超过允许数量 => 直接显示
+        if (visualLines <= maxVisibleLines)
+            return;
+
+        // Step 4: 按“视觉行”裁剪底部 maxVisibleLines
+        int cut = visualLines - maxVisibleLines;
+
+        int startChar = info.lineInfo[cut].firstCharacterIndex;
+        string finalText = full.ToString().Substring(startChar);
+
+        // Step 5: 显示裁剪后的文本
+        textArea.text = finalText;
     }
+
 
     void HandleCursorBlink()
     {

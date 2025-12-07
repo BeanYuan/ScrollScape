@@ -1,5 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class FixedAspectRatio : MonoBehaviour
@@ -9,14 +7,9 @@ public class FixedAspectRatio : MonoBehaviour
 
     private Camera cam;
 
-    void Awake()
+    void Start()   //´Ó Awake ¸Ä³É Start
     {
         cam = GetComponent<Camera>();
-        ApplyLetterbox();
-    }
-
-    void Update()
-    {
         ApplyLetterbox();
     }
 
@@ -27,25 +20,24 @@ public class FixedAspectRatio : MonoBehaviour
 
         float scaleHeight = windowAspect / targetAspect;
 
+        Rect rect = cam.rect;
+
         if (scaleHeight < 1f)
         {
-            Rect rect = cam.rect;
             rect.width = 1f;
             rect.height = scaleHeight;
             rect.x = 0f;
-            rect.y = (1f - scaleHeight) * 0.5f;
-            cam.rect = rect;
+            rect.y = (1f - scaleHeight) / 2f;
         }
         else
         {
             float scaleWidth = 1f / scaleHeight;
-
-            Rect rect = cam.rect;
             rect.width = scaleWidth;
             rect.height = 1f;
-            rect.x = (1f - scaleWidth) * 0.5f;
-            cam.rect = rect;
+            rect.x = (1f - scaleWidth) / 2f;
+            rect.y = 0f;
         }
+
+        cam.rect = rect;
     }
 }
-

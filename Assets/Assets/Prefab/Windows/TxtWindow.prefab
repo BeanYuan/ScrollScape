@@ -413,7 +413,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   textArea: {fileID: 2563199920621860218}
-  maxVisibleLines: 30
+  maxVisibleLines: 11
   maxHistoryLines: 500
   cursorChar: _
   defaultBootText: 
