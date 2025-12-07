@@ -70,6 +70,10 @@ public class StepCameraFollow2D : MonoBehaviour
     {
         if (player == null) return;
 
+        // 每帧根据相机当前参数算可视范围
+        halfHeight = cam.orthographicSize;
+        halfWidth = halfHeight * cam.aspect;
+
         // ---------- 1. 先判断玩家是否跑出了当前“屏幕格子” ----------
         bool regionChanged = false;
         Vector3 newRegionCenter = regionCenter;

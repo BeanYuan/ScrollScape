@@ -25,6 +25,11 @@ public class ResizeHandleDrag : MonoBehaviour
     private Color originalColor;
     private bool hasOriginalColor = false;
 
+    [Header("拖动音效")]
+    public AudioSource audioSource;       // 建议挂在 handle 或 window 上，再拖进来
+    public AudioClip dragStartClip;       // 按下开始拖动时
+    public AudioClip dragEndClip;         // 松开结束拖动时
+
     void Start()
     {
         cam = Camera.main;
@@ -41,6 +46,10 @@ public class ResizeHandleDrag : MonoBehaviour
             originalColor = sr.color;
             hasOriginalColor = true;
         }
+
+        // 不强制自动加 AudioSource，如果你愿意也可以顺手用自己身上的
+        if (audioSource == null)
+            audioSource = GetComponent<AudioSource>();
     }
 
     void OnMouseDown()
@@ -57,6 +66,12 @@ public class ResizeHandleDrag : MonoBehaviour
             dragStartMouseWorld = mouseWorld;
             dragStartWindowSize = window.GetCurrentWorldSize();
             dragStartScaleFactor = window.GetCurrentScaleFactor();
+
+            // 播放开始拖动音效
+            if (audioSource != null && dragStartClip != null)
+            {
+                audioSource.PlayOneShot(dragStartClip);
+            }
         }
         else
         {
@@ -96,7 +111,15 @@ public class ResizeHandleDrag : MonoBehaviour
 
     void OnMouseUp()
     {
+        if (!dragging) return;
+
         dragging = false;
+
+        // 播放结束拖动音效
+        if (audioSource != null && dragEndClip != null)
+        {
+            audioSource.PlayOneShot(dragEndClip);
+        }
     }
 
     // ---------- 悬浮高亮 ----------

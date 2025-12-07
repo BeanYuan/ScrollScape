@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Text;
 using UnityEngine;
 using TMPro;
+using UnityEngine.Tilemaps;
 
 [RequireComponent(typeof(Collider2D))]
 public class FakeTerminal : MonoBehaviour
@@ -10,14 +11,27 @@ public class FakeTerminal : MonoBehaviour
     public TMP_Text textArea;
 
     [Header("显示设置")]
-    public int maxLines = 50;
+    public int maxVisibleLines = 30;      // 屏幕上最多显示多少行
+    public int maxHistoryLines = 500;     // 内部最多保留多少行历史
     public string prompt = "> ";
-    public string cursorChar = "_";      // 光标符号
+    public string cursorChar = "_";
+
+    [Header("默认启动文本（Inspector 里直接多行输入）")]
+    [TextArea(3, 10)]
+    public string defaultBootText;
+    public bool prependPromptToDefault = true;
 
     [Header("当前是否有输入焦点（只读）")]
-    public bool hasFocus = false;        // 必须点击窗口才输入
+    public bool hasFocus = false;
 
-    private readonly List<string> lines = new List<string>();
+    [Header("DIR 命令显示用标题前缀")]
+    public string directoryTitlePrefix = " Directory of ";
+
+    [Header("FORMAT 目标世界（Grid 根节点，可空）")]
+    public Grid gridRoot;
+    public float formatTileDelay = 0.02f;   // 每删一个 tile 等待的时间（秒）
+
+    private readonly List<string> lines = new List<string>();  // 全部历史行
     private string currentLine = "";
 
     private float cursorTimer = 0f;
@@ -25,6 +39,8 @@ public class FakeTerminal : MonoBehaviour
 
     private Collider2D col;
     private Camera cam;
+
+    private bool isFormatting = false;
 
     void Awake()
     {
@@ -34,16 +50,34 @@ public class FakeTerminal : MonoBehaviour
         if (textArea == null)
             textArea = GetComponentInChildren<TMP_Text>();
 
+        if (gridRoot == null)
+            gridRoot = FindObjectOfType<Grid>();
+
         ResetTerminal();
     }
 
-    /// <summary>
-    /// 清空终端
-    /// </summary>
     public void ResetTerminal()
     {
         lines.Clear();
         currentLine = "";
+
+        if (!string.IsNullOrEmpty(defaultBootText))
+        {
+            string[] rawLines = defaultBootText.Split('\n');
+            foreach (var raw in rawLines)
+            {
+                string l = raw.TrimEnd('\r');
+
+                if (prependPromptToDefault && l.Length > 0)
+                    lines.Add(prompt + l);
+                else
+                    lines.Add(l);
+
+                if (lines.Count > maxHistoryLines)
+                    lines.RemoveAt(0);
+            }
+        }
+
         Redraw();
     }
 
@@ -51,27 +85,21 @@ public class FakeTerminal : MonoBehaviour
     {
         HandleCursorBlink();
 
-        // ① 鼠标左键点击：决定有没有焦点
         if (Input.GetMouseButtonDown(0))
         {
             UpdateFocusByClick();
         }
 
-        // ② 没有焦点就不接收键盘输入，但光标可以继续闪烁
         if (!hasFocus)
         {
             Redraw();
             return;
         }
 
-        // ③ 有焦点时才响应键盘（ESC 不再处理）
         HandleInput();
         Redraw();
     }
 
-    /// <summary>
-    /// 根据本次鼠标点击位置判断：点击在窗口内 → hasFocus = true；否则 false
-    /// </summary>
     void UpdateFocusByClick()
     {
         if (cam == null || col == null)
@@ -81,8 +109,6 @@ public class FakeTerminal : MonoBehaviour
         }
 
         Vector2 mouseWorld = cam.ScreenToWorldPoint(Input.mousePosition);
-
-        // 用 RaycastAll 检测所有命中的 Collider2D
         RaycastHit2D[] hits = Physics2D.RaycastAll(mouseWorld, Vector2.zero);
 
         bool hitSelf = false;
@@ -102,36 +128,150 @@ public class FakeTerminal : MonoBehaviour
     {
         foreach (char c in Input.inputString)
         {
-            if (c == '\b') // Backspace
+            if (c == '\b')
             {
                 if (currentLine.Length > 0)
                     currentLine = currentLine.Substring(0, currentLine.Length - 1);
             }
-            else if (c == '\n' || c == '\r') // Enter
+            else if (c == '\n' || c == '\r')
             {
                 CommitLine();
             }
-            else if (!char.IsControl(c)) // 普通字符
+            else if (!char.IsControl(c))
             {
                 currentLine += c;
             }
         }
-
-        // ? 不再处理 ESC
-        // if (Input.GetKeyDown(KeyCode.Escape)) { hasFocus = false; }
     }
 
     void CommitLine()
     {
         lines.Add(prompt + currentLine);
-
-        if (lines.Count > maxLines)
+        if (lines.Count > maxHistoryLines)
             lines.RemoveAt(0);
 
-        // 这里以后可以扩展命令解析：
-        // RunCommand(currentLine);
+        RunCommand(currentLine);
 
         currentLine = "";
+    }
+
+    void RunCommand(string input)
+    {
+        if (string.IsNullOrWhiteSpace(input))
+            return;
+
+        string trimmed = input.Trim();
+        string[] parts = trimmed.Split(' ');
+        string cmd = parts[0].ToUpperInvariant();
+
+        switch (cmd)
+        {
+            case "HELP":
+                ExecuteHelp();
+                break;
+            case "DIR":
+                ExecuteDir();
+                break;
+            case "CLS":
+                ExecuteCls();
+                break;
+            case "FORMAT":
+                ExecuteFormat();
+                break;
+            case "EXIT":
+                ExecuteExit();
+                break;
+            default:
+                PrintSystem("Unknown command: " + trimmed);
+                PrintSystem("Type HELP for available commands.");
+                break;
+        }
+    }
+
+    void ExecuteHelp()
+    {
+        PrintSystem("Available commands:");
+        PrintSystem("DIR       Displays the files and folders in the current directory.");
+        PrintSystem("CLS       Clears the screen.");
+        PrintSystem("FORMAT    Formats a drive or virtual world directory (use with caution).");
+        PrintSystem("EXIT      Exits the console.");
+    }
+
+    // ====== 修改后的 DIR ======
+    void ExecuteDir()
+    {
+        PrintSystem("");
+
+        // 当前游戏所在目录（Editor：工程/Assets，Build：xxx_Data）
+        string folder = Application.dataPath;
+        PrintSystem(directoryTitlePrefix + folder);
+        PrintSystem("");
+    }
+
+    void ExecuteCls()
+    {
+        lines.Clear();
+        currentLine = "";
+        Redraw();
+    }
+
+    void ExecuteFormat()
+    {
+        if (isFormatting)
+        {
+            PrintSystem("FORMAT is already in progress...");
+            return;
+        }
+
+        PrintSystem("");
+        PrintSystem("WARNING: This will erase the virtual world.");
+        PrintSystem("Formatting...");
+        PrintSystem("");
+
+        StartCoroutine(FormatWorldRoutine());
+    }
+
+    System.Collections.IEnumerator FormatWorldRoutine()
+    {
+        isFormatting = true;
+
+        Tilemap[] maps;
+        if (gridRoot != null)
+            maps = gridRoot.GetComponentsInChildren<Tilemap>();
+        else
+            maps = FindObjectsOfType<Tilemap>();
+
+        foreach (var tm in maps)
+        {
+            if (tm == null) continue;
+
+            BoundsInt bounds = tm.cellBounds;
+            for (int x = bounds.xMin; x < bounds.xMax; x++)
+            {
+                for (int y = bounds.yMin; y < bounds.yMax; y++)
+                {
+                    var pos = new Vector3Int(x, y, 0);
+                    if (tm.HasTile(pos))
+                    {
+                        tm.SetTile(pos, null);
+                        yield return new WaitForSeconds(formatTileDelay);
+                    }
+                }
+            }
+        }
+
+        PrintSystem("Format complete.");
+        isFormatting = false;
+    }
+
+    // ====== 修改后的 EXIT ======
+    void ExecuteExit()
+    {
+        PrintSystem("Exiting ScrollScape console...");
+        Redraw();
+
+        // 只退出游戏本身；在 Editor 里这行不会停止 Play，只是无效果
+        Application.Quit();
     }
 
     void Redraw()
@@ -140,15 +280,15 @@ public class FakeTerminal : MonoBehaviour
 
         StringBuilder sb = new StringBuilder();
 
-        // 历史行
-        foreach (string line in lines)
-            sb.AppendLine(line);
+        int start = Mathf.Max(0, lines.Count - maxVisibleLines);
+        for (int i = start; i < lines.Count; i++)
+        {
+            sb.AppendLine(lines[i]);
+        }
 
-        // 当前行
         sb.Append(prompt);
         sb.Append(currentLine);
 
-        // 光标只在有焦点时显示
         if (hasFocus && cursorVisible)
             sb.Append(cursorChar);
 
@@ -168,7 +308,7 @@ public class FakeTerminal : MonoBehaviour
     public void PrintSystem(string msg)
     {
         lines.Add(msg);
-        if (lines.Count > maxLines)
+        if (lines.Count > maxHistoryLines)
             lines.RemoveAt(0);
         Redraw();
     }

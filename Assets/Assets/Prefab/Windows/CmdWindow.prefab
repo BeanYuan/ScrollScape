@@ -413,7 +413,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   textArea: {fileID: 2563199920621860218}
-  maxLines: 50
+  maxVisibleLines: 8
+  maxHistoryLines: 16
   prompt: '> '
   cursorChar: _
+  defaultBootText: 
+  prependPromptToDefault: 1
   hasFocus: 0
+  directoryTitlePrefix: ' Directory of '
+  gridRoot: {fileID: 0}
+  formatTileDelay: 0.001
