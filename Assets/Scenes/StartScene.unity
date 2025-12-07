@@ -624,6 +624,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5bb74cdb228906142b17e7593f80f9df, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  mode: 0
   speed: 3
   leftEdge: -2
   rightEdge: 2
@@ -638,7 +639,7 @@ MonoBehaviour:
   phase1Clip: {fileID: 8300000, guid: 5d952cd58accd9e4e962508a7bb671bd, type: 3}
   phase2Clip: {fileID: 8300000, guid: 86472af4b4aa71546bad9c51b786b8ab, type: 3}
   phase1Loop: 1
-  phase2Loop: 1
+  phase2Loop: 0
 --- !u!212 &1766995194
 SpriteRenderer:
   m_ObjectHideFlags: 0

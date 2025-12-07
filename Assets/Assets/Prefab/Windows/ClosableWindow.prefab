@@ -372,7 +372,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   windowRoot: {fileID: 6265599939802248175}
-  clickSfx: {fileID: 8300000, guid: dbed7964ded8d974aac1ee3440e03010, type: 3}
+  clickSfx: {fileID: 8300000, guid: 2b14baae7b879b74084b9bccf7d0bf4f, type: 3}
   hoverColor: {r: 1, g: 1, b: 1, a: 1}
   handleLayerMask:
     serializedVersion: 2
